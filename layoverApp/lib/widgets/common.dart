@@ -191,3 +191,9 @@ class CoastPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
+
+/// Shows a distance nicely: under 1 km in metres, otherwise in km.
+String fmtDist(double km) {
+  if (km < 1) return '${(km * 1000).round()} m';
+  return '${km.toStringAsFixed(km < 10 ? 1 : 0)} km';
+}

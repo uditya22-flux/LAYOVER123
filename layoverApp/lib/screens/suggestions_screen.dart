@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 import '../config.dart';
 import '../models.dart';
 import '../services/google_places.dart';
+import '../services/osm_places.dart';
 import '../services/backend.dart';
 import '../services/location_service.dart';
 import '../theme.dart';
@@ -26,6 +27,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
   LatLng? me;
   String? note;
   bool usedGoogle = false;
+  bool usedOsm = false;
 
   @override
   void initState() {
@@ -40,7 +42,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     });
     try {
       final pos = await LocationService.current();
-      final all = await Backend.fetchPlaces(userLat: pos.latitude, userLng: pos.longitude);
+      final all = await Backend.fetchPlaces();
       note = null;
       usedGoogle = false;
       if (useGoogle) {
@@ -50,6 +52,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         } catch (_) {
           note = 'Google places are unavailable right now. Showing saved spots only.';
         }
+      }
+      usedOsm = false;
+      try {
+        all.addAll(await OsmPlaces.nearby(pos.latitude, pos.longitude, widget.maxKm * 1000));
+        usedOsm = true;
+      } catch (_) {
+        note ??= 'Could not load nearby spots from OpenStreetMap. Showing saved spots only.';
       }
       final nearby = <Place>[];
       for (final p in all) {
@@ -88,7 +97,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     } else if (places.isEmpty) {
       body = StateMessage(
           icon: Icons.explore_off_rounded,
-          title: 'Nothing within ${widget.maxKm.round()} km',
+          title: 'Nothing within ${fmtDist(widget.maxKm)}',
           body: 'No one-star spots found in that range. Go back and try a larger distance.',
           actionLabel: 'Refresh',
           onAction: _load);
@@ -100,9 +109,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         itemBuilder: (_, i) {
           if (i == 0) {
             return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('One-star spots within ${widget.maxKm.round()} km', style: hand(28)),
+              Text('Spots within ${fmtDist(widget.maxKm)}', style: hand(28)),
               if (note != null) Text(note!, style: const TextStyle(fontSize: 13.5)),
               if (usedGoogle) const Text('Some place data from Google Maps Platform', style: TextStyle(fontSize: 12.5)),
+              if (usedOsm) const Text('Place data from OpenStreetMap contributors', style: TextStyle(fontSize: 12.5)),
             ]);
           }
           return _PlaceCard(place: places[i - 1], onGo: () => _go(places[i - 1]));
@@ -128,14 +138,17 @@ class _PlaceCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(child: Text(place.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800))),
-          Text('${place.distanceKm.toStringAsFixed(1)} km', style: const TextStyle(fontWeight: FontWeight.w800, color: C.ocean)),
+          Text(fmtDist(place.distanceKm), style: const TextStyle(fontWeight: FontWeight.w800, color: C.ocean)),
         ]),
         const SizedBox(height: 6),
-        Row(children: [
-          StarRow(place.legacyRating.round().clamp(0, 5), size: 18),
-          const SizedBox(width: 8),
-          Text('${place.legacyRating.toStringAsFixed(1)} legacy rating', style: const TextStyle(fontSize: 13.5)),
-        ]),
+        if (place.legacyRating > 0)
+          Row(children: [
+            StarRow(place.legacyRating.round().clamp(0, 5), size: 18),
+            const SizedBox(width: 8),
+            Text('${place.legacyRating.toStringAsFixed(1)} legacy rating', style: const TextStyle(fontSize: 13.5)),
+          ])
+        else
+          const TagPill('Hidden spot - not rated yet', color: C.sage),
         if (place.description.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(place.description, style: const TextStyle(fontSize: 15, height: 1.4)),
