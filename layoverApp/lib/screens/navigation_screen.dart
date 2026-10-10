@@ -19,7 +19,7 @@ class NavigationScreen extends StatefulWidget {
   State<NavigationScreen> createState() => _NavigationScreenState();
 }
 
-class _NavigationScreenState extends State<NavigationScreen> {
+class _NavigationScreenState extends State<NavigationScreen> with SingleTickerProviderStateMixin {
   final _map = MapController();
   late LatLng me = widget.start;
   late final LatLng dest = LatLng(widget.place.lat, widget.place.lng);
@@ -29,7 +29,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
   bool _rerouting = false;
   bool _mapReady = false;
   bool following = true;
-  double heading = 0;
+
+  // Smooth position & rotation animation
+  late AnimationController _anim;
+  LatLng _animStartPos = const LatLng(0, 0);
+  LatLng _animTargetPos = const LatLng(0, 0);
+  double _animStartHeading = 0;
+  double _animTargetHeading = 0;
+  double _displayHeading = 0;
+
   StreamSubscription<Position>? sub;
   late double distM = Geolocator.distanceBetween(me.latitude, me.longitude, dest.latitude, dest.longitude);
 
@@ -41,13 +49,44 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   void initState() {
     super.initState();
+    _animStartPos = widget.start;
+    _animTargetPos = widget.start;
+
+    _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 750))
+      ..addListener(() {
+        final t = Curves.easeInOutCubic.transform(_anim.value);
+        final lat = _animStartPos.latitude + (_animTargetPos.latitude - _animStartPos.latitude) * t;
+        final lng = _animStartPos.longitude + (_animTargetPos.longitude - _animStartPos.longitude) * t;
+        me = LatLng(lat, lng);
+
+        // Shortest arc angle interpolation
+        final diff = ((_animTargetHeading - _animStartHeading + 540) % 360) - 180;
+        _displayHeading = (_animStartHeading + diff * t) % 360;
+
+        if (following && _mapReady) {
+          _map.move(me, _map.camera.zoom);
+        }
+        setState(() {});
+      });
+
     _fetchRoute();
+
     sub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 2,
+        distanceFilter: 0, // Continuous stream without jumpy deadbands
       ),
     ).listen(_onPosition, onError: (_) {});
+  }
+
+  void _animateTo(LatLng target, double targetHeading, {Duration duration = const Duration(milliseconds: 750)}) {
+    _anim.stop();
+    _animStartPos = me;
+    _animTargetPos = target;
+    _animStartHeading = _displayHeading;
+    _animTargetHeading = targetHeading;
+    _anim.duration = duration;
+    _anim.forward(from: 0.0);
   }
 
   Future<void> _fetchRoute() async {
@@ -70,29 +109,23 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   void _onPosition(Position p) {
     if (!mounted) return;
-    if (_simTimer != null) return; // Let manual simulation run without GPS override
+    if (_simTimer != null) return; // Prioritize manual simulation if running
     final here = LatLng(p.latitude, p.longitude);
-    double newHeading = heading;
+
+    double nextHeading = _displayHeading;
     if (p.heading > 0) {
-      newHeading = p.heading;
+      nextHeading = p.heading;
     } else {
       final moved = Geolocator.distanceBetween(me.latitude, me.longitude, here.latitude, here.longitude);
-      if (moved >= 1.5) {
-        newHeading = Geolocator.bearingBetween(me.latitude, me.longitude, here.latitude, here.longitude);
+      if (moved >= 1.0) {
+        nextHeading = Geolocator.bearingBetween(me.latitude, me.longitude, here.latitude, here.longitude);
       }
     }
 
-    setState(() {
-      me = here;
-      heading = newHeading;
-      distM = Geolocator.distanceBetween(p.latitude, p.longitude, dest.latitude, dest.longitude);
-    });
+    distM = Geolocator.distanceBetween(p.latitude, p.longitude, dest.latitude, dest.longitude);
+    _animateTo(here, nextHeading, duration: const Duration(milliseconds: 750));
 
-    if (following && _mapReady) {
-      _map.move(here, _map.camera.zoom);
-    }
-
-    // Refresh route when user has moved 120m
+    // Refresh route when user has moved 120m away from where route was generated
     final moved = Geolocator.distanceBetween(_routeFrom.latitude, _routeFrom.longitude, here.latitude, here.longitude);
     if (moved > 120 && distM > kArrivalRadiusM) _fetchRoute();
   }
@@ -109,7 +142,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     if (pts == null || pts.isEmpty) return;
 
     _simStep = 0;
-    _simTimer = Timer.periodic(const Duration(milliseconds: 600), (t) {
+    _simTimer = Timer.periodic(const Duration(milliseconds: 800), (t) {
       if (!mounted) {
         t.cancel();
         return;
@@ -119,23 +152,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
         final nextPt = (_simStep + 1 < pts.length) ? pts[_simStep + 1] : dest;
         final turnAngle = Geolocator.bearingBetween(targetPt.latitude, targetPt.longitude, nextPt.latitude, nextPt.longitude);
 
-        setState(() {
-          me = targetPt;
-          heading = turnAngle;
-          distM = Geolocator.distanceBetween(targetPt.latitude, targetPt.longitude, dest.latitude, dest.longitude);
-        });
+        distM = Geolocator.distanceBetween(targetPt.latitude, targetPt.longitude, dest.latitude, dest.longitude);
+        _animateTo(targetPt, turnAngle, duration: const Duration(milliseconds: 750));
 
-        if (following && _mapReady) {
-          _map.move(targetPt, _map.camera.zoom);
-        }
         _simStep++;
       } else {
         t.cancel();
         _simTimer = null;
-        setState(() {
-          me = dest;
-          distM = 0;
-        });
+        distM = 0;
+        _animateTo(dest, _displayHeading, duration: const Duration(milliseconds: 500));
       }
     });
     setState(() {});
@@ -144,6 +169,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   void dispose() {
     _simTimer?.cancel();
+    _anim.dispose();
     sub?.cancel();
     _map.dispose();
     super.dispose();
@@ -206,8 +232,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   ),
                   Marker(
                     point: me,
-                    width: 44,
-                    height: 44,
+                    width: 46,
+                    height: 46,
                     child: Container(
                       decoration: BoxDecoration(
                         color: C.seaGlass,
@@ -216,8 +242,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
                         boxShadow: [BoxShadow(color: C.ink.withValues(alpha: .3), blurRadius: 6)],
                       ),
                       child: Transform.rotate(
-                        angle: heading * math.pi / 180,
-                        child: const Icon(Icons.navigation_rounded, color: Colors.white, size: 24),
+                        angle: _displayHeading * math.pi / 180,
+                        child: const Icon(Icons.navigation_rounded, color: Colors.white, size: 26),
                       ),
                     ),
                   ),
