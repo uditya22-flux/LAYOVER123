@@ -161,7 +161,10 @@ class _VideoTileState extends State<VideoTile> {
       final ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url));
       await ctrl.initialize();
       await ctrl.play();
-      if (!mounted) return ctrl.dispose();
+      if (!mounted) {
+        ctrl.dispose();
+        return;
+      }
       setState(() {
         c = ctrl;
         starting = false;

@@ -24,9 +24,7 @@ class LocationService {
     if (perm == LocationPermission.deniedForever) {
       throw AppException('Location permission is blocked. Enable it in your phone settings.');
     }
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
+    return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
   static double distanceKm(double aLat, double aLng, double bLat, double bLng) =>
