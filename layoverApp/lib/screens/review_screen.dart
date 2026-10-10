@@ -58,7 +58,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
     try {
       final url = await Backend.uploadVideo(video!);
       await Backend.insertReview(
-          placeId: widget.place.id, videoUrl: url, featureTag: tag!, highlight: _text.text.trim());
+          placeId: widget.place.id,
+          placeName: widget.place.name,
+          videoUrl: url,
+          featureTag: tag!,
+          highlight: _text.text.trim());
       if (!mounted) return;
       await showDialog(
         context: context,
@@ -144,7 +148,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ]),
         const SizedBox(height: 22),
         Text('Rating', style: hand(28)),
-        Row(children: const [
+        const Row(children: [
           StarRow(5, size: 34),
           SizedBox(width: 10),
           Expanded(child: Text('Five stars for the one thing that earns it.', style: TextStyle(fontSize: 14))),

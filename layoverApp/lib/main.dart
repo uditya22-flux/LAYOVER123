@@ -6,7 +6,13 @@ import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  if (isSupabaseConfigured) {
+    try {
+      await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseAnonKey);
+    } catch (e) {
+      debugPrint('Supabase initialization failed: $e');
+    }
+  }
   runApp(const RoveyaApp());
 }
 

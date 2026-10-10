@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../models.dart';
@@ -128,7 +129,7 @@ class _ReviewCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(review.highlight, style: const TextStyle(fontSize: 15.5, height: 1.4)),
             const SizedBox(height: 6),
-            Text('${d.day}/${d.month}/${d.year}', style: TextStyle(fontSize: 12.5, color: C.ink.withOpacity(.6))),
+            Text('${d.day}/${d.month}/${d.year}', style: TextStyle(fontSize: 12.5, color: C.ink.withValues(alpha: .6))),
           ]),
         ),
       ]),
@@ -158,10 +159,15 @@ class _VideoTileState extends State<VideoTile> {
   Future<void> _start() async {
     setState(() => starting = true);
     try {
-      final ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      final ctrl = widget.url.startsWith('http://') || widget.url.startsWith('https://')
+          ? VideoPlayerController.networkUrl(Uri.parse(widget.url))
+          : VideoPlayerController.file(File(widget.url.replaceFirst('file://', '')));
       await ctrl.initialize();
       await ctrl.play();
-      if (!mounted) return ctrl.dispose();
+      if (!mounted) {
+        await ctrl.dispose();
+        return;
+      }
       setState(() {
         c = ctrl;
         starting = false;

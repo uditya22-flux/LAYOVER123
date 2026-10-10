@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import '../config.dart';
 import '../models.dart';
+import '../services/google_places.dart';
 import '../services/backend.dart';
 import '../services/location_service.dart';
 import '../theme.dart';
@@ -22,6 +24,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
   String? error;
   List<Place> places = [];
   LatLng? me;
+  String? note;
+  bool usedGoogle = false;
 
   @override
   void initState() {
@@ -36,7 +40,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     });
     try {
       final pos = await LocationService.current();
-      final all = await Backend.fetchPlaces();
+      final all = await Backend.fetchPlaces(userLat: pos.latitude, userLng: pos.longitude);
+      note = null;
+      usedGoogle = false;
+      if (useGoogle) {
+        try {
+          all.addAll(await GooglePlaces.nearby(pos.latitude, pos.longitude, widget.maxKm * 1000));
+          usedGoogle = true;
+        } catch (_) {
+          note = 'Google places are unavailable right now. Showing saved spots only.';
+        }
+      }
       final nearby = <Place>[];
       for (final p in all) {
         p.distanceKm = LocationService.distanceKm(pos.latitude, pos.longitude, p.lat, p.lng);
@@ -85,7 +99,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 14),
         itemBuilder: (_, i) {
           if (i == 0) {
-            return Text('One-star spots within ${widget.maxKm.round()} km', style: hand(28));
+            return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('One-star spots within ${widget.maxKm.round()} km', style: hand(28)),
+              if (note != null) Text(note!, style: const TextStyle(fontSize: 13.5)),
+              if (usedGoogle) const Text('Some place data from Google Maps Platform', style: TextStyle(fontSize: 12.5)),
+            ]);
           }
           return _PlaceCard(place: places[i - 1], onGo: () => _go(places[i - 1]));
         },
@@ -125,11 +143,71 @@ class _PlaceCard extends StatelessWidget {
         const SizedBox(height: 10),
         Wrap(spacing: 6, runSpacing: 6, children: [
           if (place.score >= 2) const TagPill('Matches your mood', color: C.sage),
-          if (place.isSample) TagPill('Sample data', color: C.mist),
+          if (place.isSample) const TagPill('Sample data', color: C.mist),
         ]),
+        if (place.isGoogle)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: TextButton.icon(
+              onPressed: () => _showGoogleReviews(context, place),
+              icon: const Icon(Icons.reviews_outlined),
+              label: const Text('What Google reviewers say'),
+            ),
+          ),
         const SizedBox(height: 12),
         FilledButton(onPressed: onGo, child: const Text('Go here')),
       ]),
     );
   }
+}
+
+void _showGoogleReviews(BuildContext context, Place place) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: C.cream,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (_) => DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: .7,
+      maxChildSize: .95,
+      builder: (ctx, scroll) => FutureBuilder<List<GoogleReview>>(
+        future: GoogleReviews.fetch(place.id),
+        builder: (ctx, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator(color: C.ocean));
+          }
+          if (snap.hasError) {
+            return StateMessage(icon: Icons.cloud_off_rounded, title: 'Could not load', body: snap.error.toString());
+          }
+          final items = snap.data ?? [];
+          if (items.isEmpty) {
+            return const StateMessage(icon: Icons.chat_bubble_outline_rounded, title: 'No written reviews', body: 'Google has no written reviews for this place.');
+          }
+          return ListView(controller: scroll, padding: const EdgeInsets.all(20), children: [
+            Text(place.name, style: hand(30)),
+            const Text('Reviews from Google Maps', style: TextStyle(fontSize: 12.5)),
+            const SizedBox(height: 12),
+            for (final r in items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: SoftCard(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Expanded(child: Text(r.author, style: const TextStyle(fontWeight: FontWeight.w800))),
+                      StarRow(r.rating, size: 16),
+                    ]),
+                    if (r.when.isNotEmpty) Text(r.when, style: const TextStyle(fontSize: 12.5)),
+                    if (r.text.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(r.text, style: const TextStyle(fontSize: 15, height: 1.4)),
+                    ],
+                  ]),
+                ),
+              ),
+          ]);
+        },
+      ),
+    ),
+  );
 }

@@ -52,11 +52,11 @@ ThemeData buildTheme() {
       fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: C.ocean.withOpacity(.25)),
+        borderSide: BorderSide(color: C.ocean.withValues(alpha: .25)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: C.ocean.withOpacity(.25)),
+        borderSide: BorderSide(color: C.ocean.withValues(alpha: .25)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

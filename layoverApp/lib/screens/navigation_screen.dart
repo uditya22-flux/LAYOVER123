@@ -26,7 +26,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
   StreamSubscription<Position>? sub;
   late double distM = Geolocator.distanceBetween(me.latitude, me.longitude, dest.latitude, dest.longitude);
 
-  bool get arrived => kDemoUnlock || distM <= kArrivalRadiusM;
+  bool simulatedArrival = false;
+  bool get arrived => kDemoUnlock || simulatedArrival || distM <= kArrivalRadiusM;
 
   @override
   void initState() {
@@ -109,7 +110,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           decoration: BoxDecoration(
             color: C.cream,
-            border: Border(top: BorderSide(color: C.ocean.withOpacity(.15))),
+            border: Border(top: BorderSide(color: C.ocean.withValues(alpha: .15))),
           ),
           child: SafeArea(
             top: false,
@@ -135,7 +136,20 @@ class _NavigationScreenState extends State<NavigationScreen> {
               if (!arrived)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text('Unlocks within ${kArrivalRadiusM.round()} m of the spot.', style: const TextStyle(fontSize: 13.5)),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Unlocks within ${kArrivalRadiusM.round()} m of the spot.',
+                          style: const TextStyle(fontSize: 13.5),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => setState(() => simulatedArrival = true),
+                        child: const Text('Simulate arrival', style: TextStyle(fontSize: 13)),
+                      ),
+                    ],
+                  ),
                 ),
             ]),
           ),
