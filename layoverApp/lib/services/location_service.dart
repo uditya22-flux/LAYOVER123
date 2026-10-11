@@ -25,7 +25,7 @@ class LocationService {
       throw AppException('Location permission is blocked. Enable it in your phone settings.');
     }
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      desiredAccuracy: LocationAccuracy.high,
     );
   }
 

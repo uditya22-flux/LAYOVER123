@@ -49,4 +49,5 @@ insert into places (name, description, lat, lng, legacy_rating, mood_tags, energ
 ('Sample Spot 3: Overgrown hill path', 'Sample entry. Replace with a real low-rated spot.', 11.0700, 75.9100, 1.0, '{adventurous,reflective}', 'high'),
 ('Sample Spot 4: Forgotten tea shop', 'Sample entry. Replace with a real low-rated spot.', 11.0500, 75.9400, 2.0, '{social,curious}', 'medium'),
 ('Sample Spot 5: Backwater jetty', 'Sample entry. Replace with a real low-rated spot.', 11.0300, 75.9000, 1.0, '{calm,curious}', 'medium'),
-('Sample Spot 6: Disused railway cutting', 'Sample entry. Replace with a real low-rated spot.', 11.0800, 75.9500, 1.5, '{adventurous,curious}', 'high');
+('Sample Spot 6: Disused railway cutting', 'Sample entry. Replace with a real low-rated spot.', 11.0800, 75.9500, 1.5, '{adventurous,curious}', 'high'),
+('TinkerHub Calicut Gate', '1-star reviews complain about the creaky metal gate and narrow path. But walk up to the gate for the cool breeze, open courtyard, and inspiring maker community spirit at TinkerHub / TinkerSpace Calicut.', 11.2770, 75.8215, 1.0, '{calm,curious,adventurous,reflective,social}', 'low');

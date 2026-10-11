@@ -13,8 +13,8 @@ class SoftCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: C.ocean.withOpacity(.15)),
-          boxShadow: [BoxShadow(color: C.ink.withOpacity(.06), blurRadius: 8, offset: const Offset(0, 3))],
+          border: Border.all(color: C.ocean.withValues(alpha: .15)),
+          boxShadow: [BoxShadow(color: C.ink.withValues(alpha: .06), blurRadius: 8, offset: const Offset(0, 3))],
         ),
         child: child,
       );
@@ -39,17 +39,17 @@ class OptionTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected ? C.mist : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: selected ? C.ocean : C.ocean.withOpacity(.2), width: selected ? 2 : 1),
+              border: Border.all(color: selected ? C.ocean : C.ocean.withValues(alpha: .2), width: selected ? 2 : 1),
             ),
             child: Row(children: [
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: TextStyle(fontSize: 14, color: C.ink.withOpacity(.75))),
+                  Text(subtitle, style: TextStyle(fontSize: 14, color: C.ink.withValues(alpha: .75))),
                 ]),
               ),
-              Icon(selected ? Icons.check_circle : Icons.circle_outlined, color: selected ? C.ocean : C.ink.withOpacity(.3)),
+              Icon(selected ? Icons.check_circle : Icons.circle_outlined, color: selected ? C.ocean : C.ink.withValues(alpha: .3)),
             ]),
           ),
         ),
@@ -80,7 +80,7 @@ class StarRow extends StatelessWidget {
         children: List.generate(
             5,
             (i) => Icon(i < filled ? Icons.star_rounded : Icons.star_outline_rounded,
-                size: size, color: i < filled ? const Color(0xFFE0A526) : C.ink.withOpacity(.3))),
+                size: size, color: i < filled ? const Color(0xFFE0A526) : C.ink.withValues(alpha: .3))),
       );
 }
 
@@ -157,7 +157,7 @@ class CoastPainter extends CustomPainter {
       ..lineTo(0, s.height)
       ..close();
     canvas.drawPath(sea, p);
-    p.color = C.ocean.withOpacity(.55);
+    p.color = C.ocean.withValues(alpha: .55);
     final deep = Path()..moveTo(0, s.height * .88);
     for (double x = 0; x <= s.width; x += 50) {
       deep.quadraticBezierTo(x + 12, s.height * .84, x + 25, s.height * .88);
@@ -190,4 +190,10 @@ class CoastPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+/// Shows a distance nicely: under 1 km in metres, otherwise in km.
+String fmtDist(double km) {
+  if (km < 1) return '${(km * 1000).round()} m';
+  return '${km.toStringAsFixed(km < 10 ? 1 : 0)} km';
 }
