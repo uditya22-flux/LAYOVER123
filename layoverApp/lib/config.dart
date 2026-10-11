@@ -5,7 +5,7 @@ const supabaseAnonKey = 'sb_publishable_fr0zC8Q3OiVgM6DDTinZVA_Hh5GmaIo';
 bool get isSupabaseConfigured =>
     supabaseUrl.startsWith('http') &&
     supabaseAnonKey.isNotEmpty &&
-    supabaseUrl != 'https://djmlwolaciymzxzyxqkq.supabase.co';
+    !supabaseUrl.contains('YOUR_PROJECT');
 
 /// Default distance (in km). No minimum or maximum limits are enforced.
 const kDefaultRadiusKm = 1.0;
