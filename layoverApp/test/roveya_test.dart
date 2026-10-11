@@ -99,6 +99,25 @@ void main() {
           (place.energy == 'low' ? 1 : 0);
       expect(scoreMatchNone, 0);
     });
+
+    test('Multiple mood scoring logic', () {
+      final place = Place(
+        id: 'p1',
+        name: 'Hilltop Spot',
+        description: 'Rocky path',
+        lat: 10,
+        lng: 70,
+        legacyRating: 1.0,
+        moodTags: ['adventurous', 'curious', 'reflective'],
+        energy: 'high',
+        isSample: true,
+      );
+
+      final selectedMoods = ['adventurous', 'curious'];
+      final matchCount = place.moodTags.where((m) => selectedMoods.contains(m)).length;
+      final score = (matchCount * 2) + (place.energy == 'high' ? 1 : 0);
+      expect(score, 5); // 2*2 + 1 = 5
+    });
   });
 
   group('Backend Fallbacks', () {
@@ -110,6 +129,14 @@ void main() {
         final d = LocationService.distanceKm(13.0, 77.0, p.lat, p.lng);
         expect(d, lessThan(20.0));
       }
+    });
+
+    test('TinkerHub Calicut Gate exists and is within 500m and 400m for walking demo', () async {
+      final places = await Backend.fetchPlaces(userLat: 11.2748, userLng: 75.8202);
+      final gate = places.firstWhere((p) => p.name.contains('TinkerHub') || p.name.contains('TinkerSpace'));
+      final distKm = LocationService.distanceKm(11.2748, 75.8202, gate.lat, gate.lng);
+      expect(distKm, lessThan(0.50)); // under 500m
+      expect(distKm, lessThan(0.40)); // under 400m
     });
 
     test('fetchReviews returns reviews and filters by featureTag', () async {

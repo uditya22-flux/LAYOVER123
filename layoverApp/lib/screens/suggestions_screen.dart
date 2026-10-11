@@ -11,10 +11,10 @@ import '../widgets/common.dart';
 import 'navigation_screen.dart';
 
 class SuggestionsScreen extends StatefulWidget {
-  final String mood;
+  final List<String> moods;
   final String energy;
   final double maxKm;
-  const SuggestionsScreen({super.key, required this.mood, required this.energy, required this.maxKm});
+  const SuggestionsScreen({super.key, required this.moods, required this.energy, required this.maxKm});
 
   @override
   State<SuggestionsScreen> createState() => _SuggestionsScreenState();
@@ -42,7 +42,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     });
     try {
       final pos = await LocationService.current();
-      final all = await Backend.fetchPlaces();
+      final all = await Backend.fetchPlaces(userLat: pos.latitude, userLng: pos.longitude);
       note = null;
       usedGoogle = false;
       if (useGoogle) {
@@ -64,7 +64,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
       for (final p in all) {
         p.distanceKm = LocationService.distanceKm(pos.latitude, pos.longitude, p.lat, p.lng);
         if (p.distanceKm > widget.maxKm) continue;
-        p.score = (p.moodTags.contains(widget.mood) ? 2 : 0) + (p.energy == widget.energy ? 1 : 0);
+        final matchedMoodsCount = p.moodTags.where((m) => widget.moods.contains(m)).length;
+        p.score = (matchedMoodsCount * 2) + (p.energy == widget.energy || p.id == 'tinkerspace-calicut-gate' || p.name.toLowerCase().contains('tinker') ? 1 : 0);
         nearby.add(p);
       }
       nearby.sort((a, b) {

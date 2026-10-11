@@ -1,0 +1,66 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ / Android Studio / VS Code
+*.iml
+**/*.iml
+*.ipr
+*.iws
+.idea/
+**/.idea/
+.vscode/
+**/.vscode/
+
+# Flutter / Dart / Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+**/.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+**/.pub-cache/
+.pub/
+**/.pub/
+build/
+**/build/
+coverage/
+**/coverage/
+.packages
+.widget_preview/
+**/.widget_preview/
+
+# Android build artifacts
+**/android/.gradle/
+**/android/local.properties
+**/android/captures/
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+*.apk
+*.aab
+**/*.apk
+**/*.aab
+
+# iOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.framework
+
+# Symbolication / Obfuscation
+app.*.symbols
+app.*.map.json

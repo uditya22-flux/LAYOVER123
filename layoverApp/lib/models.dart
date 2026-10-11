@@ -86,16 +86,37 @@ class Review {
     required this.createdAt,
   });
 
-  factory Review.fromMap(Map<String, dynamic> m) => Review(
-        id: m['id'].toString(),
-        placeId: m['place_id'].toString(),
-        placeName: (m['place_name'] ?? 'Unknown place') as String,
-        videoUrl: m['video_url'] as String,
-        rating: (m['rating'] as num).toInt(),
-        featureTag: (m['feature_tag'] ?? 'Other') as String,
-        highlight: (m['highlight'] ?? '') as String,
-        createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
-      );
+  factory Review.fromMap(Map<String, dynamic> m) {
+    String pName = 'Unknown place';
+    if (m['places'] is Map && m['places']['name'] != null) {
+      pName = m['places']['name'].toString();
+    } else if (m['place_name'] != null) {
+      pName = m['place_name'].toString();
+    }
+    return Review(
+      id: m['id'].toString(),
+      placeId: m['place_id']?.toString() ?? '',
+      placeName: pName,
+      videoUrl: m['video_url']?.toString() ?? '',
+      rating: (m['rating'] as num?)?.toInt() ?? 5,
+      featureTag: (m['feature_tag'] ?? 'Other').toString(),
+      highlight: (m['highlight'] ?? '').toString(),
+      createdAt: m['created_at'] != null
+          ? DateTime.parse(m['created_at'].toString()).toLocal()
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'place_id': placeId,
+        'place_name': placeName,
+        'video_url': videoUrl,
+        'rating': rating,
+        'feature_tag': featureTag,
+        'highlight': highlight,
+        'created_at': createdAt.toIso8601String(),
+      };
 }
 
 class AppException implements Exception {

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import '../models.dart';
 import '../services/backend.dart';
@@ -73,7 +74,16 @@ class _FeedScreenState extends State<FeedScreen> {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('Community reviews')),
+      appBar: AppBar(
+        title: const Text('Community reviews'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh feed',
+            onPressed: _load,
+          ),
+        ],
+      ),
       body: Column(children: [
         SizedBox(
           height: 52,
@@ -147,62 +157,159 @@ class VideoTile extends StatefulWidget {
 
 class _VideoTileState extends State<VideoTile> {
   VideoPlayerController? c;
-  bool starting = false;
+  bool initializing = true;
   bool failed = false;
 
   @override
-  void dispose() {
-    c?.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _initThumbnail();
   }
 
-  Future<void> _start() async {
-    setState(() => starting = true);
+  Future<void> _initThumbnail() async {
     try {
-      final ctrl = widget.url.startsWith('http://') || widget.url.startsWith('https://')
-          ? VideoPlayerController.networkUrl(Uri.parse(widget.url))
-          : VideoPlayerController.file(File(widget.url.replaceFirst('file://', '')));
+      final isNetwork = widget.url.startsWith('http://') || widget.url.startsWith('https://');
+      VideoPlayerController ctrl;
+      if (isNetwork) {
+        ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      } else {
+        final cleanPath = widget.url.replaceFirst('file://', '');
+        File f = File(cleanPath);
+        if (!f.existsSync()) {
+          final dir = await getApplicationDocumentsDirectory();
+          final fileName = cleanPath.split('/').last;
+          final fallback = File('${dir.path}/review_videos/$fileName');
+          if (fallback.existsSync()) {
+            f = fallback;
+          }
+        }
+        ctrl = VideoPlayerController.file(f);
+      }
       await ctrl.initialize();
-      await ctrl.play();
+      // Seek slightly into video to display a vibrant first frame instead of a black intro frame
+      if (ctrl.value.duration > const Duration(milliseconds: 300)) {
+        await ctrl.seekTo(const Duration(milliseconds: 200));
+      }
       if (!mounted) {
         await ctrl.dispose();
         return;
       }
+      ctrl.addListener(_onControllerUpdate);
       setState(() {
         c = ctrl;
-        starting = false;
+        initializing = false;
       });
     } catch (_) {
-      if (mounted) setState(() { failed = true; starting = false; });
+      if (mounted) {
+        setState(() {
+          failed = true;
+          initializing = false;
+        });
+      }
+    }
+  }
+
+  void _onControllerUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _togglePlay() async {
+    final ctrl = c;
+    if (ctrl == null || !ctrl.value.isInitialized) return;
+    if (ctrl.value.isPlaying) {
+      await ctrl.pause();
+    } else {
+      if (ctrl.value.position >= ctrl.value.duration) {
+        await ctrl.seekTo(Duration.zero);
+      }
+      await ctrl.play();
     }
   }
 
   @override
+  void dispose() {
+    c?.removeListener(_onControllerUpdate);
+    c?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (c != null) {
+    if (c != null && c!.value.isInitialized) {
+      final isPlaying = c!.value.isPlaying;
       return AspectRatio(
-        aspectRatio: c!.value.aspectRatio,
+        aspectRatio: 16 / 10,
         child: GestureDetector(
-          onTap: () => setState(() => c!.value.isPlaying ? c!.pause() : c!.play()),
-          child: VideoPlayer(c!),
+          onTap: _togglePlay,
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              FittedBox(
+                fit: BoxFit.cover,
+                clipBehavior: Clip.hardEdge,
+                child: SizedBox(
+                  width: c!.value.size.width > 0 ? c!.value.size.width : 16,
+                  height: c!.value.size.height > 0 ? c!.value.size.height : 10,
+                  child: VideoPlayer(c!),
+                ),
+              ),
+              // Play button overlay when paused
+              if (!isPlaying)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.28),
+                  child: Center(
+                    child: Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 40),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       );
     }
+
     return AspectRatio(
       aspectRatio: 16 / 10,
       child: Container(
         color: C.mist,
         child: Center(
           child: failed
-              ? const Text('Video unavailable')
-              : starting
-                  ? const CircularProgressIndicator(color: C.ocean)
-                  : IconButton.filled(
-                      iconSize: 36,
-                      style: IconButton.styleFrom(backgroundColor: C.ocean),
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      onPressed: _start,
+              ? const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.videocam_off_outlined, color: C.ocean, size: 32),
+                    SizedBox(height: 6),
+                    Text('Video unavailable', style: TextStyle(fontSize: 13, color: C.ink)),
+                  ],
+                )
+              : const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(color: C.ocean, strokeWidth: 2.5),
                     ),
+                    SizedBox(height: 8),
+                    Text('Loading preview...', style: TextStyle(fontSize: 12, color: C.ocean)),
+                  ],
+                ),
         ),
       ),
     );

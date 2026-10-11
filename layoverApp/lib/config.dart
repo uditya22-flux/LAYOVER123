@@ -7,10 +7,8 @@ bool get isSupabaseConfigured =>
     supabaseAnonKey.isNotEmpty &&
     supabaseUrl != 'https://djmlwolaciymzxzyxqkq.supabase.co';
 
-/// Default distance on the slider (user can change it, in km).
-const kDefaultRadiusKm = 10.0;
-const kMinRadiusKm = 0.1; // 100 m
-const kMaxRadiusKm = 50.0;
+/// Default distance (in km). No minimum or maximum limits are enforced.
+const kDefaultRadiusKm = 1.0;
 
 /// How close (meters) the user must be before check-in unlocks.
 const kArrivalRadiusM = 75.0;

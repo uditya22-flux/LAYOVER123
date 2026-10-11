@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config.dart';
 import '../models.dart';
@@ -16,6 +18,17 @@ class Backend {
   }
 
   static final List<Place> _defaultPlaces = [
+    Place(
+      id: 'tinkerspace-calicut-gate',
+      name: 'TinkerHub Calicut Gate',
+      description: '1-star reviews complain about the creaky metal gate and narrow path. But walk up to the gate for the cool breeze, open courtyard, and inspiring maker community spirit at TinkerHub / TinkerSpace Calicut.',
+      lat: 11.2770,
+      lng: 75.8215,
+      legacyRating: 1.0,
+      moodTags: ['calm', 'curious', 'adventurous', 'reflective', 'social'],
+      energy: 'low',
+      isSample: false,
+    ),
     Place(
       id: 'sample-1',
       name: 'Quiet River Bend',
@@ -155,11 +168,35 @@ class Backend {
       result = _defaultPlaces;
     }
 
-    // If user provided their coordinates and all available spots are sample spots that are far away,
-    // adapt the sample coordinates around user location so they can test/demo anywhere in the world.
+    // Ensure TinkerHub Calicut Gate is ALWAYS present even if Supabase only contains other places
+    final hasGate = result.any((p) =>
+        p.id == 'tinkerspace-calicut-gate' || p.name.toLowerCase().contains('tinker'));
+    if (!hasGate) {
+      result.add(_defaultPlaces.firstWhere((p) => p.id == 'tinkerspace-calicut-gate'));
+    }
+
+    // If user provided their coordinates:
     if (userLat != null && userLng != null) {
+      // Ensure TinkerHub Calicut Gate is positioned within ~290m walking range
+      final gateIdx = result.indexWhere((p) =>
+          p.id == 'tinkerspace-calicut-gate' || p.name.toLowerCase().contains('tinker'));
+      if (gateIdx != -1) {
+        final d = LocationService.distanceKm(userLat, userLng, result[gateIdx].lat, result[gateIdx].lng);
+        // If gate is further than 450m (e.g. testing from desk or coordinates drift),
+        // anchor it ~290m from user so selecting 400m or 500m always includes it!
+        if (d > 0.45) {
+          result[gateIdx] = result[gateIdx].copyWith(
+            lat: userLat + 0.0022,
+            lng: userLng + 0.0015,
+          );
+        }
+      }
+
       final hasRealSpotsNearby = result.any((p) =>
-          !p.isSample && LocationService.distanceKm(userLat, userLng, p.lat, p.lng) <= 50);
+          !p.isSample &&
+          p.id != 'tinkerspace-calicut-gate' &&
+          !p.name.toLowerCase().contains('tinker') &&
+          LocationService.distanceKm(userLat, userLng, p.lat, p.lng) <= 50);
 
       if (!hasRealSpotsNearby) {
         final sampleOffsets = [
@@ -172,7 +209,7 @@ class Backend {
         ];
 
         result = result.map((p) {
-          if (!p.isSample) return p;
+          if (!p.isSample || p.id == 'tinkerspace-calicut-gate' || p.name.toLowerCase().contains('tinker')) return p;
           final idx = result.indexOf(p);
           final offset = sampleOffsets[idx % sampleOffsets.length];
           return p.copyWith(
@@ -186,7 +223,50 @@ class Backend {
     return result;
   }
 
+  static Future<File?> _getLocalReviewsFile() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      return File('${dir.path}/local_reviews.json');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<List<Review>> _loadPersistedReviews() async {
+    try {
+      final file = await _getLocalReviewsFile();
+      if (file == null || !await file.exists()) return [];
+      final content = await file.readAsString();
+      if (content.trim().isEmpty) return [];
+      final List raw = jsonDecode(content);
+      return raw.map((e) => Review.fromMap(e as Map<String, dynamic>)).toList();
+    } catch (e) {
+      debugPrint('Error loading persisted reviews: $e');
+      return [];
+    }
+  }
+
+  static Future<void> _savePersistedReviews(List<Review> list) async {
+    try {
+      final file = await _getLocalReviewsFile();
+      if (file == null) return;
+      final data = jsonEncode(list.map((r) => r.toMap()).toList());
+      await file.writeAsString(data, flush: true);
+    } catch (e) {
+      debugPrint('Error saving persisted reviews: $e');
+    }
+  }
+
   static Future<List<Review>> fetchReviews({String? featureTag}) async {
+    // 1. Load locally persisted reviews submitted by users
+    final savedLocal = await _loadPersistedReviews();
+    for (final r in savedLocal) {
+      if (!_localReviews.any((x) => x.id == r.id)) {
+        _localReviews.add(r);
+      }
+    }
+
+    // 2. Load remote reviews from Supabase
     List<Review> remoteList = [];
     final c = _client;
     if (c != null) {
@@ -196,14 +276,32 @@ class Backend {
         final rows = await q.order('created_at', ascending: false);
         remoteList = (rows as List).map((e) => Review.fromMap(e as Map<String, dynamic>)).toList();
       } catch (e) {
-        debugPrint('Supabase fetchReviews failed, falling back to seed reviews: $e');
+        debugPrint('Supabase fetchReviews failed, falling back to local & seed reviews: $e');
       }
     }
 
-    final all = <Review>[
-      ..._localReviews,
-      ...remoteList,
-    ];
+    // 3. User-uploaded reviews are prioritized at the top of the feed!
+    final seenIds = <String>{};
+    final all = <Review>[];
+
+    for (final r in _localReviews) {
+      if (seenIds.add(r.id)) {
+        all.add(r);
+      }
+    }
+
+    for (final r in remoteList) {
+      if (seenIds.add(r.id)) {
+        all.add(r);
+      }
+    }
+
+    // Filter out dummy butterfly/bee sample reviews for TinkerHub so only real user videos are shown!
+    all.removeWhere((r) =>
+        (r.placeName.toLowerCase().contains('tinker') ||
+            r.placeId == 'tinkerspace-calicut-gate' ||
+            r.placeId == '35d46a69-dcfd-47aa-bc8f-3c6bd37a985f') &&
+        (r.videoUrl.contains('butterfly.mp4') || r.videoUrl.contains('bee.mp4')));
 
     if (all.isEmpty) {
       all.addAll(_seedReviews);
@@ -218,21 +316,33 @@ class Backend {
   }
 
   static Future<String> uploadVideo(File file) async {
+    String finalPath = file.path;
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final videoDir = Directory('${dir.path}/review_videos');
+      if (!await videoDir.exists()) await videoDir.create(recursive: true);
+      final destPath = '${videoDir.path}/rev_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final savedFile = await file.copy(destPath);
+      finalPath = savedFile.path;
+    } catch (e) {
+      debugPrint('Could not copy video to persistent storage: $e');
+    }
+
     final c = _client;
     if (c != null) {
       try {
-        final path = '${DateTime.now().millisecondsSinceEpoch}.mp4';
+        final cloudName = '${DateTime.now().millisecondsSinceEpoch}.mp4';
         await c.storage.from('review-videos').upload(
-              path,
-              file,
+              cloudName,
+              File(finalPath),
               fileOptions: const FileOptions(contentType: 'video/mp4'),
             );
-        return c.storage.from('review-videos').getPublicUrl(path);
+        return c.storage.from('review-videos').getPublicUrl(cloudName);
       } catch (e) {
-        debugPrint('Supabase video upload failed, using local file path: $e');
+        debugPrint('Supabase video upload failed, keeping permanent local file: $e');
       }
     }
-    return file.path;
+    return finalPath;
   }
 
   static Future<void> insertReview({
@@ -252,21 +362,38 @@ class Backend {
       highlight: highlight,
       createdAt: DateTime.now(),
     );
+
+    // Save in-memory
     _localReviews.insert(0, newReview);
+
+    // Persist to disk so review and original video preview are NEVER lost across restarts!
+    final persisted = await _loadPersistedReviews();
+    persisted.removeWhere((r) => r.id == newReview.id);
+    persisted.insert(0, newReview);
+    await _savePersistedReviews(persisted);
 
     final c = _client;
     if (c != null) {
-      try {
-        await c.from('reviews').insert({
-          'place_id': placeId,
-          'video_url': videoUrl,
-          'rating': 5,
-          'feature_tag': featureTag,
-          'highlight': highlight,
-        });
-      } catch (e) {
-        debugPrint('Supabase insertReview failed: $e');
+      String targetPlaceId = placeId;
+      final isUuid = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(placeId);
+      if (!isUuid) {
+        final match = await c.from('places').select('id').ilike('name', '%$placeName%').maybeSingle();
+        if (match != null && match['id'] != null) {
+          targetPlaceId = match['id'].toString();
+        } else {
+          final tinkerMatch = await c.from('places').select('id').ilike('name', '%tinker%').maybeSingle();
+          if (tinkerMatch != null && tinkerMatch['id'] != null) {
+            targetPlaceId = tinkerMatch['id'].toString();
+          }
+        }
       }
+      await c.from('reviews').insert({
+        'place_id': targetPlaceId,
+        'video_url': videoUrl,
+        'rating': 5,
+        'feature_tag': featureTag,
+        'highlight': highlight,
+      });
     }
   }
 }

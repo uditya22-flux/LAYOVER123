@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../config.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'suggestions_screen.dart';
@@ -21,8 +20,10 @@ const _energies = [
 
 // label, value, isKm
 const _quick = [
+  ('400 m', '400', false),
   ('500 m', '500', false),
   ('1 km', '1', true),
+  ('3 km', '3', true),
   ('5 km', '5', true),
   ('10 km', '10', true),
   ('25 km', '25', true),
@@ -36,10 +37,10 @@ class MoodScreen extends StatefulWidget {
 }
 
 class _MoodScreenState extends State<MoodScreen> {
-  String? mood;
+  final Set<String> moods = {};
   String? energy;
-  final _dist = TextEditingController(text: kDefaultRadiusKm.round().toString());
-  bool inKm = true;
+  final _dist = TextEditingController(text: '500');
+  bool inKm = false;
 
   @override
   void dispose() {
@@ -56,13 +57,11 @@ class _MoodScreenState extends State<MoodScreen> {
   String? get distError {
     if (_dist.text.trim().isEmpty) return 'Enter a distance';
     final k = km;
-    if (k == null) return 'Enter a valid number';
-    if (k < kMinRadiusKm) return 'Minimum is ${(kMinRadiusKm * 1000).round()} m';
-    if (k > kMaxRadiusKm) return 'Maximum is ${kMaxRadiusKm.round()} km';
+    if (k == null || k <= 0) return 'Enter a distance greater than 0';
     return null;
   }
 
-  bool get ready => mood != null && energy != null && distError == null;
+  bool get ready => moods.isNotEmpty && energy != null && distError == null;
 
   @override
   Widget build(BuildContext context) {
@@ -75,16 +74,38 @@ class _MoodScreenState extends State<MoodScreen> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             children: [
               Text('How are you feeling right now?', style: hand(30)),
+              Text('Select one or more moods that fit your vibe',
+                  style: TextStyle(fontSize: 14.5, color: C.ink.withValues(alpha: .7))),
               const SizedBox(height: 10),
               for (final m in _moods)
-                OptionTile(title: m.$2, subtitle: m.$3, selected: mood == m.$1, onTap: () => setState(() => mood = m.$1)),
+                OptionTile(
+                  title: m.$2,
+                  subtitle: m.$3,
+                  selected: moods.contains(m.$1),
+                  onTap: () {
+                    setState(() {
+                      if (moods.contains(m.$1)) {
+                        moods.remove(m.$1);
+                      } else {
+                        moods.add(m.$1);
+                      }
+                    });
+                  },
+                ),
               const SizedBox(height: 18),
               Text('And your energy level?', style: hand(30)),
               const SizedBox(height: 10),
               for (final e in _energies)
-                OptionTile(title: e.$2, subtitle: e.$3, selected: energy == e.$1, onTap: () => setState(() => energy = e.$1)),
+                OptionTile(
+                  title: e.$2,
+                  subtitle: e.$3,
+                  selected: energy == e.$1,
+                  onTap: () => setState(() => energy = e.$1),
+                ),
               const SizedBox(height: 18),
               Text('How far can you travel?', style: hand(30)),
+              Text('Set any distance you want (no limits)',
+                  style: TextStyle(fontSize: 14.5, color: C.ink.withValues(alpha: .7))),
               const SizedBox(height: 10),
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Expanded(
@@ -94,7 +115,7 @@ class _MoodScreenState extends State<MoodScreen> {
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
                     onChanged: (_) => setState(() {}),
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                    decoration: InputDecoration(hintText: 'e.g. 5', errorText: distError),
+                    decoration: InputDecoration(hintText: 'e.g. 500', errorText: distError),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -130,7 +151,12 @@ class _MoodScreenState extends State<MoodScreen> {
                   ? null
                   : () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => SuggestionsScreen(mood: mood!, energy: energy!, maxKm: km!))),
+                      MaterialPageRoute(
+                          builder: (_) => SuggestionsScreen(
+                                moods: moods.toList(),
+                                energy: energy!,
+                                maxKm: km!,
+                              ))),
               child: const Text('Show me places'),
             ),
           ),

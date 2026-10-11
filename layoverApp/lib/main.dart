@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -24,6 +24,6 @@ class RoveyaApp extends StatelessWidget {
         title: 'Roveya',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
-        home: const HomeScreen(),
+        home: const SplashScreen(),
       );
 }
