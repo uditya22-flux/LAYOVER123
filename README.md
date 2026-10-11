@@ -1,95 +1,136 @@
-# Roveya (Layover)
+<div align="center">
 
-[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.3.0-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-%3E%3D3.3.0-0175C2?logo=dart&logoColor=white)](https://dart.dev)
-[![Supabase](https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-4285F4)](https://github.com/uditya22-flux/LAYOVER123)
-[![License](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
+# 🧭 ROVEYA
+### *Find the 5-star in 1-star spots.*
 
-**Roveya** is a Flutter mobile exploration app that steers travelers away from crowded tourist consensus to discover **1-star legacy rated places** specifically for their **verified 5-star standout feature** (views, quiet, coffee, culture, people).
+A Flutter mobile app that flips conventional travel ratings on its head — sending travelers to overlooked 1-star legacy places specifically for their verified 5-star standout features.
 
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Database Setup (Supabase)](#database-setup-supabase)
-- [Common Commands](#common-commands)
-- [Build APK](#build-apk)
-- [Device Permissions](#device-permissions)
-- [Troubleshooting](#troubleshooting)
-- [License](#license)
+[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.3.0-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-%3E%3D3.3.0-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
+[![Supabase](https://img.shields.io/badge/Backend-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![OpenStreetMap](https://img.shields.io/badge/Maps-OpenStreetMap-7EBC6F?style=for-the-badge&logo=openstreetmap&logoColor=white)](https://www.openstreetmap.org)
+[![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
 
 ---
 
-## Features
+</div>
 
-- **Mood & Energy Selection**: Choose multiple moods (*Calm, Curious, Adventurous, Reflective, Social*) and energy level with unrestricted distance input (default `500 m`, quick chips: `400 m`, `500 m`, `1 km`, `3 km`, `5 km`, `10 km`, `25 km`).
-- **Live Navigation & Compass**: 60/120 FPS interpolated arrow movement, shortest-arc compass rotation auto-following user heading, turn-by-turn road routing via OpenStreetMap / OSRM, and built-in walk simulation for desk testing.
-- **75m Proximity Check-in**: Arrive within 75 meters of the destination to unlock check-in and digital collectible stamps.
-- **Video Proof Reviews with Real Thumbnails**: Record video reviews on-site; the community feed displays the actual video frame as cover thumbnail with tap-to-play playback.
-- **Multi-Device Cloud Sync**: Powered by Supabase Database and Storage with real-time community feed and one-tap refresh.
-- **Branded Design**: Custom vector compass rose & 5-star discovery logo widget and animated splash screen.
-- **TinkerSpace Calicut Demo Spot**: Pre-configured demo destination anchored ~290 m from Kozhikode campus for live walking demos.
+## 📌 Table of Contents
+
+- [The Problem & The Solution](#-the-problem--the-solution)
+- [How It Works](#-how-it-works)
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Project Architecture](#-project-architecture)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start)
+- [Configuration](#-configuration)
+- [Database Setup (Supabase)](#-database-setup-supabase)
+- [Build APK](#-build-apk)
+- [Device Permissions](#-device-permissions)
+- [Demo Presentation Mode](#-demo-presentation-mode)
+- [Troubleshooting](#-troubleshooting)
+- [License](#-license)
 
 ---
 
-## Tech Stack
+## 💡 The Problem & The Solution
 
-| Component | Technology |
+| The Problem | Roveya's Solution |
 | :--- | :--- |
-| **Framework** | Flutter (Material 3) |
-| **Language** | Dart |
-| **Backend & Auth** | Supabase (PostgreSQL + Storage) |
-| **Mapping & Routing** | OpenStreetMap (flutter_map) + OSRM |
-| **Geolocation** | geolocator (High Accuracy GPS) |
-| **Media Playback** | video_player |
-| **Typography** | google_fonts (Nunito + Caveat) |
+| **Consensus Bias**: Mainstream apps funnel every traveler to the same 5-star tourist traps. | **Uncover The Overlooked**: Routes users to low-rated legacy spots with unique character. |
+| **Unfair Legacy Ratings**: Places receive 1-star reviews for bad parking, worn chairs, or slow Wi-Fi. | **Spotlight Standout Features**: Highlights the *one thing* that earns 5 stars (sunset view, secret recipe, banyan silence, maker community). |
+| **Fake & Text-only Reviews**: Anonymous text reviews lack authenticity. | **Verified Video Proof**: Video reviews recorded directly on-site with 75m GPS proximity verification. |
 
 ---
 
-## Project Structure
+## 🔄 How It Works
+
+```mermaid
+flowchart LR
+    A["SplashScreen<br/>(Logo & Branding)"] --> B["HomeScreen<br/>(Hero Landing)"]
+    B --> C["MoodScreen<br/>(Mood, Energy & Distance)"]
+    C --> D["SuggestionsScreen<br/>(Scored Recommendations)"]
+    D --> E["NavigationScreen<br/>(Live GPS, OSRM & Compass)"]
+    E -->|Within 75m| F["ReviewScreen<br/>(Check-in & Video Record)"]
+    F -->|Submit Review| G["FeedScreen<br/>(Community Video Stream)"]
+```
+
+1. **Vibe Match**: Pick your mood (*Calm, Curious, Adventurous, Reflective, Social*), energy level, and walking radius.
+2. **Scored Spots**: Algorithm ranks legacy 1-star places based on mood alignment and proximity.
+3. **Smooth Navigation**: Follow live turn-by-turn road routes with 60/120 FPS continuous heading auto-follow.
+4. **Proximity Unlock**: Check-in unlocks automatically when you arrive within **75 meters** of the spot.
+5. **Video Proof**: Record and upload a 5-star feature video review directly to Supabase cloud storage.
+6. **Community Feed**: Every traveler across all devices can watch the real uploaded video review with inline playback.
+
+---
+
+## 🌟 Key Features
+
+- **Multi-Mood Selection**: Select single or multiple moods simultaneously to tailor recommendations.
+- **Unrestricted Distance**: Freeform distance input in meters or kilometers with quick chips (`400 m`, `500 m`, `1 km`, `3 km`, etc.).
+- **Smooth 60/120 FPS Heading Animation**: Compass bearing uses shortest-arc angular lerp (`_lerpAngle`) to eliminate 360° jump stuttering during walking.
+- **Real Video Cover Thumbnails**: Community review cards decode the actual uploaded video stream to display real video frames as thumbnails.
+- **Multi-Device Cloud Sync**: Real-time Supabase Database and Storage backend shared across all installed APKs.
+- **Offline Resilience**: User-submitted reviews are saved to on-device persistent JSON storage so content is never lost if network drops.
+- **Artisan Retro Travel Aesthetic**: Warm retro theme (`C.cream`, `C.ocean`, `C.butter`, `C.peach`) and custom vector Compass Rose & Star logo widget.
+- **TinkerSpace Calicut Demo Spot**: Built-in walking demo destination anchored ~290 m from Kozhikode campus for live presentations.
+- **Desk Testing Walk Simulator**: Built-in "Simulate walk" button for desk demos without having to walk outside.
+
+---
+
+## 🛠️ Tech Stack
+
+| Area | Tools & Packages |
+| :--- | :--- |
+| **UI Framework** | [Flutter 3.x](https://flutter.dev) (Dart 3.x) with Material 3 |
+| **Backend & Storage** | [Supabase](https://supabase.com) (PostgreSQL, Supabase Storage, Row Level Security) |
+| **Map & Navigation** | [flutter_map](https://pub.dev/packages/flutter_map) + [latlong2](https://pub.dev/packages/latlong2) + OpenStreetMap Tiles |
+| **Road Routing** | [OSRM](http://project-osrm.org/) (Open Source Routing Machine) |
+| **Device Location** | [geolocator](https://pub.dev/packages/geolocator) (High Accuracy GPS streams) |
+| **Media & Video** | [video_player](https://pub.dev/packages/video_player) + [image_picker](https://pub.dev/packages/image_picker) |
+| **File Storage** | [path_provider](https://pub.dev/packages/path_provider) |
+| **Typography** | [google_fonts](https://pub.dev/packages/google_fonts) (Nunito & Caveat) |
+
+---
+
+## 📂 Project Architecture
 
 ```text
 layover/
-├── .gitignore                      # Root workspace gitignore
-├── README.md                       # Repository documentation
+├── .gitignore                      # Root workspace gitignore (Flutter, Android, iOS, IDE)
+├── README.md                       # Main project documentation
 └── layoverApp/                     # Flutter mobile application
     ├── lib/
     │   ├── main.dart               # App entry point (Splash -> Home)
-    │   ├── config.dart             # API keys, arrival radius & flags
-    │   ├── theme.dart              # Theme palette & typography
-    │   ├── models.dart             # Place, Review, RouteInfo models
+    │   ├── config.dart             # Configuration, API keys, arrival radius
+    │   ├── theme.dart              # Color palette & Google Fonts typography
+    │   ├── models.dart             # Place, Review, RouteInfo data models
     │   ├── screens/
-    │   │   ├── splash_screen.dart       # Animated brand intro splash
-    │   │   ├── home_screen.dart         # Home landing & navigation actions
-    │   │   ├── mood_screen.dart         # Multi-mood & distance selection
+    │   │   ├── splash_screen.dart       # Animated brand intro splash screen
+    │   │   ├── home_screen.dart         # Home landing & action navigation
+    │   │   ├── mood_screen.dart         # Multi-mood & distance input screen
     │   │   ├── suggestions_screen.dart  # Scored place recommendations
-    │   │   ├── navigation_screen.dart   # Live map, smoothed compass, GPS
-    │   │   ├── review_screen.dart       # Proximity check-in & video recording
-    │   │   └── feed_screen.dart         # Community reviews with video playback
+    │   │   ├── navigation_screen.dart   # Live map, smoothed compass, GPS tracking
+    │   │   ├── review_screen.dart       # Proximity check-in, camera video record
+    │   │   └── feed_screen.dart         # Community reviews feed with video playback
     │   ├── services/
     │   │   ├── backend.dart             # Supabase client, offline sync & persistence
-    │   │   ├── location_service.dart    # GPS location, distance & OSRM routing
-    │   │   ├── osm_places.dart          # OpenStreetMap Overpass API client
+    │   │   ├── location_service.dart    # GPS stream, Haversine math & OSRM routing
+    │   │   ├── osm_places.dart          # OpenStreetMap Overpass API integration
     │   │   └── google_places.dart       # Optional Google Places integration
     │   └── widgets/
     │       ├── roveya_logo.dart         # Vector-drawn compass logo widget
-    │       └── common.dart              # Shared cards, pills, stars & painters
+    │       └── common.dart              # SoftCard, TagPill, StarRow, CoastPainter
     ├── supabase/
-    │   ├── schema.sql              # Database tables, RLS policies, storage bucket
+    │   ├── schema.sql              # Database schema, RLS policies, storage bucket
     │   └── add_tinkerspace.sql     # TinkerHub Calicut demo place & sync setup
-    └── pubspec.yaml                # Flutter packages & dependencies
+    └── pubspec.yaml                # Flutter dependencies & metadata
 ```
 
 ---
 
-## Prerequisites
+## 📋 Prerequisites
 
 - **Flutter SDK**: `>=3.3.0 <4.0.0`
 - **Dart SDK**: bundled with Flutter
@@ -98,92 +139,83 @@ layover/
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
-# 1. Clone repository
+# 1. Clone the repository
 git clone https://github.com/uditya22-flux/LAYOVER123.git
 cd LAYOVER123/layoverApp
 
 # 2. Install dependencies
 flutter pub get
 
-# 3. Analyze code
+# 3. Analyze code quality
 flutter analyze
 
-# 4. Run application
+# 4. Run tests
+flutter test
+
+# 5. Launch app on connected device
 flutter run
 ```
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
-Update settings in [`layoverApp/lib/config.dart`](layoverApp/lib/config.dart):
+Application settings and feature flags are managed in [`layoverApp/lib/config.dart`](layoverApp/lib/config.dart):
 
 ```dart
+// Supabase Project Credentials
 const supabaseUrl = 'https://YOUR_PROJECT.supabase.co';
 const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
 
-// Default distance radius in km (no limits enforced)
+// Default search distance in km (unrestricted)
 const kDefaultRadiusKm = 1.0;
 
-// Proximity distance to unlock check-in (in meters)
+// Proximity radius in meters required to unlock check-in
 const kArrivalRadiusM = 75.0;
 
-// Set true ONLY for desk presentations (bypasses 75m arrival requirement)
+// Set to true ONLY for desk presentations to bypass the 75m requirement
 const kDemoUnlock = false;
 ```
 
 ---
 
-## Database Setup (Supabase)
+## 🗄️ Database Setup (Supabase)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Go to **SQL Editor** in the Supabase Dashboard.
-3. Run [`layoverApp/supabase/schema.sql`](layoverApp/supabase/schema.sql) to create:
+2. Open the **SQL Editor** in your Supabase dashboard.
+3. Run [`layoverApp/supabase/schema.sql`](layoverApp/supabase/schema.sql) to set up:
    - `places` table with public read policy
    - `reviews` table with public read/insert policies
    - `review-videos` public storage bucket with upload policies
-4. Run [`layoverApp/supabase/add_tinkerspace.sql`](layoverApp/supabase/add_tinkerspace.sql) to add the TinkerHub Calicut demo place and permissions.
+4. Run [`layoverApp/supabase/add_tinkerspace.sql`](layoverApp/supabase/add_tinkerspace.sql) to register the TinkerHub Calicut Gate demo spot.
 
 ---
 
-## Common Commands
+## 📦 Build APK
 
-Run from `layoverApp/`:
-
-| Command | Action |
-| :--- | :--- |
-| `flutter pub get` | Install package dependencies |
-| `flutter analyze` | Run static analysis / linter |
-| `flutter test` | Run automated unit tests |
-| `flutter run` | Launch app on connected device |
-| `flutter build apk --debug` | Build debug APK |
-| `flutter build apk --release` | Build release APK |
-
----
-
-## Build APK
+To generate a standalone APK for testing across multiple devices:
 
 ```bash
 cd layoverApp
+
+# Build debug APK
 flutter build apk --debug
+
+# Build release APK
+flutter build apk --release
 ```
 
-The APK binary will be generated at:
+The compiled APK will be located at:
 ```text
 layoverApp/build/app/outputs/flutter-apk/app-debug.apk
 ```
 
-To build a release APK:
-```bash
-flutter build apk --release
-```
-
 ---
 
-## Device Permissions
+## 📱 Device Permissions
 
 ### Android (`android/app/src/main/AndroidManifest.xml`)
 ```xml
@@ -208,15 +240,27 @@ flutter build apk --release
 
 ---
 
-## Troubleshooting
+## 🎪 Demo Presentation Mode
 
-- **Supabase connection issue**: Confirm `supabaseUrl` and `supabaseAnonKey` in `config.dart`.
-- **Location disabled**: Turn on GPS and grant High Accuracy location permission in phone settings.
-- **Desk demo on stage**: Use the **Simulate walk** button on the map screen or set `kDemoUnlock = true` in `config.dart`.
-- **Video preview**: Video thumbnails decode the actual video frame on mount; tap the card to play.
+- **Live Walking Demo**: Select `500 m` (or `400 m`) on the mood screen to highlight **TinkerHub Calicut Gate**, walk ~290 m to the gate to unlock check-in, and record a live video review.
+- **Desk Demo**: Tap the **Simulate walk** button on the map screen to test real-time GPS movement, shortest-arc compass turning, and proximity countdown without leaving the room.
+- **Emergency Bypass**: Set `kDemoUnlock = true` in `lib/config.dart` to keep check-in unlocked regardless of distance.
 
 ---
 
-## License
+## ❓ Troubleshooting
+
+- **Supabase not connecting**: Verify `supabaseUrl` and `supabaseAnonKey` in `layoverApp/lib/config.dart`.
+- **Location permissions**: Ensure GPS is enabled and set to High Accuracy on your device.
+- **Missing spots**: Run [`add_tinkerspace.sql`](layoverApp/supabase/add_tinkerspace.sql) in Supabase SQL editor to ensure demo spots are seeded.
+- **Video preview**: Review cards decode the first frame (~200ms) of the video file; tap the card to play.
+
+---
+
+## 📄 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+<div align="center">
+<sub>Crafted with curiosity by the Roveya Team. Built for travelers who seek the extraordinary in the overlooked.</sub>
+</div>
