@@ -305,6 +305,8 @@ class _NavigationScreenState extends State<NavigationScreen> with SingleTickerPr
                     : routeFailed
                         ? 'Road route unavailable, showing a straight line'
                         : 'Finding the route...',
+                style: const TextStyle(fontSize: 14.5),
+              ),
               // AI Standout Feature Target Banner
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
