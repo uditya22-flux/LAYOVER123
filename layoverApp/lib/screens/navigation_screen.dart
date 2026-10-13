@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../config.dart';
 import '../models.dart';
+import '../services/ai_service.dart';
 import '../services/location_service.dart';
 import '../theme.dart';
 import 'review_screen.dart';
@@ -304,9 +305,35 @@ class _NavigationScreenState extends State<NavigationScreen> with SingleTickerPr
                     : routeFailed
                         ? 'Road route unavailable, showing a straight line'
                         : 'Finding the route...',
-                style: const TextStyle(fontSize: 14.5),
+              // AI Standout Feature Target Banner
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: C.mist.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: C.seaGlass.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_awesome_rounded, size: 15, color: C.ocean),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Target 5-Star: ${AiService.getInstantInsight(widget.place).title}',
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: C.ocean),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(color: C.ocean, borderRadius: BorderRadius.circular(4)),
+                      child: const Text('Llama 3.2', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 6),
               FilledButton.icon(
                 icon: Icon(arrived ? Icons.check_circle_rounded : Icons.lock_outline_rounded),
                 label: const Text('I Have Arrived / Check In'),

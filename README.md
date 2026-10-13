@@ -68,6 +68,7 @@ flowchart LR
 
 ## 🌟 Key Features
 
+- **Open-Weight AI Vibe Extractor**: Powered by [Meta Llama 3.2](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) open-weight model to analyze noisy 1-star legacy complaints and extract the hidden 5-star standout feature, with on-device trail mode for zero cell signal.
 - **Multi-Mood Selection**: Select single or multiple moods simultaneously to tailor recommendations.
 - **Unrestricted Distance**: Freeform distance input in meters or kilometers with quick chips (`400 m`, `500 m`, `1 km`, `3 km`, etc.).
 - **Smooth 60/120 FPS Heading Animation**: Compass bearing uses shortest-arc angular lerp (`_lerpAngle`) to eliminate 360° jump stuttering during walking.
@@ -84,6 +85,7 @@ flowchart LR
 
 | Area | Tools & Packages |
 | :--- | :--- |
+| **Open-Weight AI** | [Meta Llama 3.2](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) (Open-Weight Model + On-Device Trail NLP) |
 | **UI Framework** | [Flutter 3.x](https://flutter.dev) (Dart 3.x) with Material 3 |
 | **Backend & Storage** | [Supabase](https://supabase.com) (PostgreSQL, Supabase Storage, Row Level Security) |
 | **Map & Navigation** | [flutter_map](https://pub.dev/packages/flutter_map) + [latlong2](https://pub.dev/packages/latlong2) + OpenStreetMap Tiles |

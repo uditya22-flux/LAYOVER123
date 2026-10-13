@@ -4,6 +4,7 @@ import '../config.dart';
 import '../models.dart';
 import '../services/google_places.dart';
 import '../services/osm_places.dart';
+import '../services/ai_service.dart';
 import '../services/backend.dart';
 import '../services/location_service.dart';
 import '../theme.dart';
@@ -154,25 +155,184 @@ class _PlaceCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(place.description, style: const TextStyle(fontSize: 15, height: 1.4)),
         ],
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
+        // Open-Weight AI Standout Feature Extractor
+        Builder(builder: (ctx) {
+          final ai = AiService.getInstantInsight(place);
+          return Container(
+            margin: const EdgeInsets.only(top: 4, bottom: 6),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: C.mist.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: C.seaGlass.withValues(alpha: 0.35)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.auto_awesome_rounded, size: 16, color: C.ocean),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        ai.title,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: C.ocean),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: C.ocean,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Llama 3.2 AI',
+                        style: TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  ai.summary,
+                  style: const TextStyle(fontSize: 13, height: 1.35, color: C.ink),
+                ),
+              ],
+            ),
+          );
+        }),
+        const SizedBox(height: 6),
         Wrap(spacing: 6, runSpacing: 6, children: [
           if (place.score >= 2) const TagPill('Matches your mood', color: C.sage),
           if (place.isSample) const TagPill('Sample data', color: C.mist),
         ]),
-        if (place.isGoogle)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: TextButton.icon(
-              onPressed: () => _showGoogleReviews(context, place),
-              icon: const Icon(Icons.reviews_outlined),
-              label: const Text('What Google reviewers say'),
+        Row(
+          children: [
+            TextButton.icon(
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: EdgeInsets.zero),
+              icon: const Icon(Icons.psychology_rounded, size: 17, color: C.ocean),
+              label: const Text('Llama 3.2 AI Details', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+              onPressed: () => _showAiAnalysisSheet(context, place),
             ),
-          ),
-        const SizedBox(height: 12),
+            if (place.isGoogle) ...[
+              const Spacer(),
+              TextButton.icon(
+                style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: EdgeInsets.zero),
+                onPressed: () => _showGoogleReviews(context, place),
+                icon: const Icon(Icons.reviews_outlined, size: 16),
+                label: const Text('Google reviews', style: TextStyle(fontSize: 12.5)),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
         FilledButton(onPressed: onGo, child: const Text('Go here')),
       ]),
     );
   }
+}
+
+void _showAiAnalysisSheet(BuildContext context, Place place) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: C.cream,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+    builder: (_) => DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: .6,
+      maxChildSize: .85,
+      builder: (ctx, scroll) => FutureBuilder<AiStandoutInsight>(
+        future: AiService.analyzePlace(place),
+        builder: (ctx, snap) {
+          final ai = snap.data ?? AiService.getInstantInsight(place);
+          final loading = snap.connectionState != ConnectionState.done && !snap.hasData;
+
+          return ListView(
+            controller: scroll,
+            padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(color: C.ink.withValues(alpha: .2), borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: C.butter, shape: BoxShape.circle),
+                    child: const Icon(Icons.auto_awesome_rounded, color: C.ocean, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Open-Weight AI Analysis', style: hand(26)),
+                        Text(ai.model, style: const TextStyle(fontSize: 12, color: C.seaGlass, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('1-Star Legacy Perception', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.black54)),
+                    const SizedBox(height: 4),
+                    Text(place.description, style: const TextStyle(fontSize: 14.5, height: 1.4)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              SoftCard(
+                color: C.mist.withValues(alpha: .7),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                        const SizedBox(width: 6),
+                        Text(ai.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: C.ocean)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(ai.summary, style: const TextStyle(fontSize: 15, height: 1.45, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(ai.isOfflineTrailMode ? Icons.hiking_rounded : Icons.cloud_done_rounded, size: 14, color: C.seaGlass),
+                        const SizedBox(width: 4),
+                        Text(
+                          ai.isOfflineTrailMode ? 'Trail Mode (On-Device Local NLP, Zero Signal)' : 'Live Open-Weight Inference (Meta Llama 3.2)',
+                          style: const TextStyle(fontSize: 11.5, color: C.seaGlass, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator(color: C.ocean, strokeWidth: 2.5)),
+                ),
+            ],
+          );
+        },
+      ),
+    ),
+  );
 }
 
 void _showGoogleReviews(BuildContext context, Place place) {
