@@ -20,7 +20,35 @@ class HomeScreen extends StatelessWidget {
               Positioned(
                 left: 24,
                 top: MediaQuery.of(context).padding.top + 16,
-                child: Text('Roveya', style: hand(54)),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(13),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(13),
+                        child: Image.asset(
+                          'assets/images/roveya_logo.png',
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('Roveya', style: hand(50)),
+                  ],
+                ),
               ),
             ]),
           ),

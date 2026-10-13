@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme.dart';
-import '../widgets/roveya_logo.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -74,9 +74,52 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             opacity: _fadeAnimation,
             child: ScaleTransition(
               scale: _scaleAnimation,
-              child: const RoveyaLogo(
-                size: 150,
-                showWordmark: true,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 176,
+                    height: 176,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(40),
+                      boxShadow: [
+                        BoxShadow(
+                          color: C.ocean.withValues(alpha: 0.18),
+                          blurRadius: 28,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(40),
+                      child: Image.asset(
+                        'assets/images/roveya_logo.png',
+                        width: 176,
+                        height: 176,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'ROVEYA',
+                    style: GoogleFonts.cinzel(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 6,
+                      color: C.ocean,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Find the 5-star in 1-star spots',
+                    style: GoogleFonts.caveat(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: C.seaGlass,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
